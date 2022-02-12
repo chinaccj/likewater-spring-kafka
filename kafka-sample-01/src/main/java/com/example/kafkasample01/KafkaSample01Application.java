@@ -16,7 +16,7 @@ public class KafkaSample01Application {
     @KafkaListener(groupId = "testgroup1", topics = "topic1" )
     public void onMessage(String msg, Acknowledgment ack){
 
-        System.out.println("get message from test0  "+msg);
+        System.out.println("get message from topic1  "+msg);
 
         ack.acknowledge();
     }
