@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.example</groupId>
-    <artifactId>kafka-sample-01</artifactId>
+    <artifactId>kafka-sample-03</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>kafka-sample-01</name>
+    <name>kafka-sample-03</name>
     <description>Demo project for Spring Boot</description>
 
     <parent>
@@ -21,8 +21,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
-
-
 
     <dependencies>
         <dependency>
@@ -41,8 +39,6 @@
         </dependency>
     </dependencies>
 
-
-
     <build>
         <plugins>
             <plugin>
@@ -58,9 +54,9 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>2.4.1</version>
+                <version>2.3.7.RELEASE</version>
                 <configuration>
-                    <mainClass>com.example.kafkasample01.KafkaSample01Application</mainClass>
+                    <mainClass>com.example.kafkasample03.KafkaSample03Application</mainClass>
                 </configuration>
                 <executions>
                     <execution>

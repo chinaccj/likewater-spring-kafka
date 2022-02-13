@@ -1,6 +1,6 @@
-package com.example.kafkasample02;
+package com.example.kafkasample03;
 
-import com.example.kafkasample02.common.Foo1;
+import com.example.kafkasample03.common.Foo1;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.boot.SpringApplication;
@@ -11,10 +11,10 @@ import org.springframework.kafka.support.Acknowledgment;
 import java.io.IOException;
 
 @SpringBootApplication
-public class KafkaSample02Application {
+public class KafkaSample03Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(KafkaSample02Application.class, args);
+        SpringApplication.run(KafkaSample03Application.class, args);
     }
 
     @KafkaListener(groupId = "testgroup1", topics = "topic1" )
