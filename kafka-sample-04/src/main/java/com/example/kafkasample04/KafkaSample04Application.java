@@ -24,10 +24,6 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.RecoveringBatchErrorHandler;
 import org.springframework.kafka.support.Acknowledgment;
-import org.springframework.kafka.support.converter.JsonMessageConverter;
-import org.springframework.kafka.support.converter.RecordMessageConverter;
-import org.springframework.kafka.support.converter.StringJsonMessageConverter;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.io.IOException;
@@ -43,7 +39,7 @@ public class KafkaSample04Application {
 
     }
 
-    private Map<String, Object> consumerProps() {
+    private Map<String, Object> batchConsumerProps() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         //自动提交设置为false
@@ -55,6 +51,18 @@ public class KafkaSample04Application {
         return props;
     }
 
+    private Map<String, Object> singleConsumerProps() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        //自动提交设置为false
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
+
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ByteArrayDeserializer.class);
+        return props;
+    }
+
+
 
     private Map<String, Object> producerConfigs() {
         Map<String, Object> props = new HashMap<>();
@@ -63,7 +71,6 @@ public class KafkaSample04Application {
 
         // 键的序列化方式
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-//                props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ByteArraySerializer.class);
         return props;
     }
@@ -72,7 +79,7 @@ public class KafkaSample04Application {
     @Bean("batchContainerFactory")
     public ConcurrentKafkaListenerContainerFactory listenerContainer() {
         ConcurrentKafkaListenerContainerFactory container = new ConcurrentKafkaListenerContainerFactory();
-        container.setConsumerFactory(new DefaultKafkaConsumerFactory(consumerProps()));
+        container.setConsumerFactory(new DefaultKafkaConsumerFactory(batchConsumerProps()));
 
         container.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
@@ -81,12 +88,25 @@ public class KafkaSample04Application {
         //设置为批量监听
         container.setBatchListener(true);
 
-        KafkaTemplate<String, Foo1> template = new KafkaTemplate<String, Foo1>(new DefaultKafkaProducerFactory<>(producerConfigs()));
-//            template.setMessageConverter(new StringJsonMessageConverter());
-
+        KafkaTemplate<String, Object> template = new KafkaTemplate<String, Object>(new DefaultKafkaProducerFactory<>(producerConfigs()));
         RecoveringBatchErrorHandler errorHandler =
                 new RecoveringBatchErrorHandler(new DeadLetterPublishingRecoverer(template),new FixedBackOff(2000L, 2));
         container.setBatchErrorHandler(errorHandler);
+
+        return container;
+    }
+
+    @Bean("singleContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory listenerSingleConsumerContainer() {
+        ConcurrentKafkaListenerContainerFactory container = new ConcurrentKafkaListenerContainerFactory();
+        container.setConsumerFactory(new DefaultKafkaConsumerFactory(singleConsumerProps()));
+
+        container.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+
+        //并发线程数。 集群的并发线程数不低于
+        container.setConcurrency(1);
+        //设置为批量监听
+        container.setBatchListener(false);
 
         return container;
     }
@@ -138,12 +158,12 @@ public class KafkaSample04Application {
 
 
 
-    @KafkaListener(id = "dltGroup", topics = "topic1.DLT")
-    public void dltListen(String in,Acknowledgment ack) {
+    @KafkaListener(id = "dltGroup", topics = "topic1.DLT",containerFactory = "singleContainerFactory")
+    public void dltListen(ConsumerRecord<String, byte[]> in,Acknowledgment ack) {
         ObjectMapper mapper = new ObjectMapper();
         Foo1 foo = null;
         try {
-            foo = mapper.readValue(in, Foo1.class);
+            foo = mapper.readValue(in.value(), Foo1.class);
             System.out.println("Received from DLT: " + foo.toString());
 
         } catch (IOException e) {
